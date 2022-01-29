@@ -3,7 +3,7 @@ version 35
 __lua__
 
 function rope_physics(dot0, dot1)
-	local rest_len = 48
+	local rest_len = 32
 	local dx = dot0.x1 - dot1.x1
 	local dy = dot0.y1 - dot1.y1
 	local len = sqrt(dx*dx + dy*dy)
@@ -24,6 +24,16 @@ function dot_physics(dot)
 	dot.x0, dot.y0 = x, y
 end
 
+TILE_PROPS = {
+	[0] = {can_grab = true},
+	default = {can_grab = false},
+}
+
+function get_tile_prop(dot)
+	local tile = mget(dot.x1/8, dot.y1/8)
+	return TILE_PROPS[tile] or TILE_PROPS.default
+end
+
 dots = {
 	{x0=32, y0=64, x1=32, y1=64, m_inv=1},
 	{x0=96, y0=64, x1=96, y1=64, m_inv=1},
@@ -39,8 +49,20 @@ function _update60()
 		anchor, swing = dots[2], dots[1]
 	end
 
-	-- TODO
-	if btn(5) then swap = not swap end
+	local btn5 = btn(5)
+	local btn5_down = btn5 and not _btn5
+	local btn5_up = not btn5 and _btn5
+	_btn5 = btn5
+
+	-- if btn5_down then swap = not swap end
+
+	if btn5_down then foobar = true end
+	if btn5_up then foobar = false end
+
+	if foobar and get_tile_prop(swing).can_grab then
+		swap = not swap
+		foobar = false
+	end
 
 	anchor.x0 = anchor.x1
 	anchor.y0 = anchor.y1
@@ -81,6 +103,9 @@ function _draw()
 	line(dot0.x1, dot0.y1, dot1.x1, dot1.y1, 5)
 	circfill(dot0.x1, dot0.y1, 4, 0)
 	circfill(dot1.x1, dot1.y1, 4, 7)
+
+	camera()
+	if dbg_msg then print(dbg_msg) end
 end
 
 __gfx__

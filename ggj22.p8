@@ -2,10 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 35
 __lua__
 
-dot0 = {x0=32, y0=64, x1=32, y1=64, m_inv=1}
-dot1 = {x0=96, y0=64, x1=96, y1=64, m_inv=1}
-
-function relax()
+function rope_physics(dot0, dot1)
 	local rest_len = 32
 	local dx = dot0.x1 - dot1.x1
 	local dy = dot0.y1 - dot1.y1
@@ -19,29 +16,53 @@ function relax()
 	end
 end
 
-function integrate(dot)
+function dot_physics(dot)
+	local gravity = 0.1
 	local x, y = dot.x1, dot.y1
 	dot.x1 += dot.x1 - dot.x0
-	dot.y1 += dot.y1 - dot.y0
+	dot.y1 += dot.y1 - dot.y0 + gravity
 	dot.x0, dot.y0 = x, y
 end
 
+dots = {
+	{x0=32, y0=64, x1=32, y1=64, m_inv=1},
+	{x0=96, y0=64, x1=96, y1=64, m_inv=1},
+}
+
+anchored = 0
+
 function _update60()
-	local dot = dot0
+	local anchor = dots[1]
+	anchor.x0 = anchor.x1
+	anchor.y0 = anchor.y1
+	anchor.m_inv = 0
 
-	inc = 0.1
-	if btn(0) then dot.x1 -= inc end
-	if btn(1) then dot.x1 += inc end
-	if btn(2) then dot.y1 -= inc end
-	if btn(3) then dot.y1 += inc end
+	local swing = dots[2]
+	dot_physics(swing)
+	swing.m_inv = 1
 
-	integrate(dot0)
-	integrate(dot1)
-	relax()
+	local inc = 0.02
+	if btn(0) then swing.x1 -= inc end
+	if btn(1) then swing.x1 += inc end
+	if btn(2) then swing.y1 -= inc end
+	if btn(3) then swing.y1 += inc end
+
+	-- Apply spring
+	if btn(4) then
+		local dx = anchor.x1 - swing.x1
+		local dy = anchor.y1 - swing.y1
+		local len = sqrt(dx*dx + dy*dy)
+		swing.x1 += dx*len/1000
+		swing.y1 += dy*len/1000
+	end
+
+	rope_physics(dots[1], dots[2])
 end
 
 function _draw()
 	cls(12)
+
+	local dot0, dot1 = dots[1], dots[2]
 	camera(
 		(dot0.x1 + dot1.x1)/2 - 64,
 		(dot0.y1 + dot1.y1)/2 - 64

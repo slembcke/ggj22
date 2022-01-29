@@ -3,7 +3,7 @@ version 35
 __lua__
 
 function rope_physics(dot0, dot1)
-	local rest_len = 32
+	local rest_len = 48
 	local dx = dot0.x1 - dot1.x1
 	local dy = dot0.y1 - dot1.y1
 	local len = sqrt(dx*dx + dy*dy)
@@ -29,18 +29,27 @@ dots = {
 	{x0=96, y0=64, x1=96, y1=64, m_inv=1},
 }
 
-anchored = 0
+swap = true
 
 function _update60()
-	local anchor = dots[1]
+	local anchor, swing
+	if swap then
+		anchor, swing = dots[1], dots[2]
+	else
+		anchor, swing = dots[2], dots[1]
+	end
+
+	-- TODO
+	if btn(5) then swap = not swap end
+
 	anchor.x0 = anchor.x1
 	anchor.y0 = anchor.y1
 	anchor.m_inv = 0
 
-	local swing = dots[2]
 	dot_physics(swing)
 	swing.m_inv = 1
 
+	-- Apply movement.
 	local inc = 0.02
 	if btn(0) then swing.x1 -= inc end
 	if btn(1) then swing.x1 += inc end

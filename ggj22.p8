@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 35
 __lua__
 
+rest_len = 32
 function rope_physics(dot0, dot1)
-	local rest_len = 32
 	local dx = dot0.x1 - dot1.x1
 	local dy = dot0.y1 - dot1.y1
 	local len = sqrt(dx*dx + dy*dy)
@@ -56,7 +56,6 @@ function _update60()
 	if wants_to_grab and can_grab then
 		anchor, swing = swing, anchor
 		wants_to_grab = false
-		return
 	end
 
 	anchor.x0 = anchor.x1
@@ -67,11 +66,14 @@ function _update60()
 	swing.m_inv = 1
 
 	-- Apply movement.
-	local inc = 0.02
-	if btn(0) then swing.x1 -= inc end
-	if btn(1) then swing.x1 += inc end
-	if btn(2) then swing.y1 -= inc end
-	if btn(3) then swing.y1 += inc end
+	local x_inc = 0.02
+	if btn(0) then swing.x1 -= x_inc end
+	if btn(1) then swing.x1 += x_inc end
+
+	local len_inc = 0.5;
+	if btn(2) then rest_len -= len_inc end
+	if btn(3) then rest_len += len_inc end
+	rest_len = max(16, min(rest_len, 32))
 
 	-- Apply spring
 	if btn(4) then

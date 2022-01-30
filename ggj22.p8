@@ -130,7 +130,7 @@ function _update60()
 	anchor.m_inv = 0
 
 	-- Apply movement.
-	local x_inc = 0.02
+	local x_inc = 0.04
 	if btn(0) then swing.x1 -= x_inc end
 	if btn(1) then swing.x1 += x_inc end
 
@@ -144,15 +144,23 @@ function _update60()
 
 	-- Apply spring
 	local btn4 = btn(4)
-	if btn4 then
+	local btn4_down = btn4 and not _btn4
+	local btn4_up = not btn4 and _btn4
+	_btn4 = btn4
+
+	if btn4_down then
+		sfx(2)
+		spring_timeout = 10
+	end
+
+	if btn4 and spring_timeout > 0 then
 		local dx = anchor.x1 - swing.x1
 		local dy = anchor.y1 - swing.y1
 		local len = sqrt(dx*dx + dy*dy)
 		swing.x1 += dx*len/1000
 		swing.y1 += dy*len/1000
-		if not _btn4 then sfx(2) end
+		spring_timeout -= 1
 	end
-	_btn4 = btn4
 
 	rope_physics(dots[1], dots[2])
 end
@@ -173,7 +181,7 @@ function _draw()
 
 	camera()
 	if dbg_msg then print(dbg_msg) end
-	print(have_keys)
+	-- print(have_keys)
 end
 
 __gfx__

@@ -30,16 +30,46 @@ GRAB_BOTH = 0b11
 
 TILE_PROPS = {
 	default = {grab = GRAB_BOTH},
+	[127] = {collide = true}
 }
 
-function get_tile_prop(dot)
-	local tile = mget(dot.x1/8, dot.y1/8)
+function get_prop(x, y)
+	local tile = mget(x/8, y/8)
 	return TILE_PROPS[tile] or TILE_PROPS.default
+end
+
+function handle_corner(dot, px, py, dx, dy)
+	if get_prop(px, py).collide then
+		local dist = sqrt(dx*dx + dy*dy)
+		if dist < 4 then
+			local diff = (dist - 4)/dist
+			dot.x1 -= dx*diff
+			dot.y1 -= dy*diff
+		end
+	end
+end
+
+function dot_collide(dot)
+	-- Collide with edges first
+	local edge = dot.x1 - 4
+	if get_prop(edge, dot.y1).collide then dot.x1 += -edge & 0x7.FFFF end
+	local edge = dot.x1 + 4
+	if get_prop(edge, dot.y1).collide then dot.x1 -=  edge & 0x7.FFFF end
+	local edge = dot.y1 - 4
+	if get_prop(dot.x1, edge).collide then dot.y1 += -edge & 0x7.FFFF end
+	local edge = dot.y1 + 4
+	if get_prop(dot.x1, edge).collide then dot.y1 -=  edge & 0x7.FFFF end
+
+	-- handle_corner(dot, dot.x1 - 4, dot.y1 + 4,  dot.x1 + (-(dot.x1 - 4) & -8),  dot.y1 - ( (dot.y1 + 4) & -8))
+	handle_corner(dot, dot.x1 - 4, dot.y1 - 4,  ( dot.x1 & 0x7.FFFF),   ( dot.y1 & 0x7.FFFF))
+	handle_corner(dot, dot.x1 + 4, dot.y1 - 4, -(-dot.x1 & 0x7.FFFF),   ( dot.y1 & 0x7.FFFF))
+	handle_corner(dot, dot.x1 - 4, dot.y1 + 4,  ( dot.x1 & 0x7.FFFF),  -(-dot.y1 & 0x7.FFFF))
+	handle_corner(dot, dot.x1 + 4, dot.y1 + 4, -(-dot.x1 & 0x7.FFFF),  -(-dot.y1 & 0x7.FFFF))
 end
 
 dots = {
 	{x0=32, y0=64, x1=32, y1=64, m_inv=1, grab = GRAB_BLACK},
-	{x0=96, y0=64, x1=96, y1=64, m_inv=1, grab = GRAB_WHITE},
+	{x0=32, y0=64, x1=32, y1=64, m_inv=1, grab = GRAB_WHITE},
 }
 
 anchor, swing = dots[1], dots[2]
@@ -52,7 +82,8 @@ function _update60()
 	if btn5_down then wants_to_grab = true end
 	if btn5_up then wants_to_grab = false end
 
-	local can_grab = band(get_tile_prop(swing).grab, swing.grab) != 0
+	local grabable = get_prop(swing.x1, swing.y1).grab
+	local can_grab = band(grabable, swing.grab) != 0
 	if wants_to_grab and can_grab then
 		anchor, swing = swing, anchor
 		wants_to_grab = false
@@ -61,9 +92,6 @@ function _update60()
 	anchor.x0 = anchor.x1
 	anchor.y0 = anchor.y1
 	anchor.m_inv = 0
-
-	dot_physics(swing)
-	swing.m_inv = 1
 
 	-- Apply movement.
 	local x_inc = 0.02
@@ -74,6 +102,10 @@ function _update60()
 	if btn(2) then rest_len -= len_inc end
 	if btn(3) then rest_len += len_inc end
 	rest_len = max(16, min(rest_len, 32))
+
+	dot_physics(swing)
+	dot_collide(swing)
+	swing.m_inv = 1
 
 	-- Apply spring
 	if btn(4) then
@@ -89,6 +121,7 @@ end
 
 function _draw()
 	cls(12)
+	palt()
 
 	local dot0, dot1 = dots[1], dots[2]
 	camera(
@@ -103,7 +136,7 @@ function _draw()
 	spr(123, dot1.x1 - 4, dot1.y1 - 4)
 
 	camera()
-	print(dbg_msg)
+	if dbg_msg then print(dbg_msg) end
 end
 
 __gfx__

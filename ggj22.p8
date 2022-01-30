@@ -177,13 +177,29 @@ function _draw()
 	camera(max(0, min(cx - 64, 128*7)), max(0, min(cy - 64, 128*3)))
 
 	map(0, 0, 0, 0)
+
+	poke(0x5F36, 0x40) -- disable scrolling
+
+	cursor(48, 112, 0)
+	print("Use keys to\nunlock barriers")
+
+	cursor(330, 100, 0)
+	print("Some holds are\ncolor sensitive")
+
+	if anchor.x1 == 60 and anchor.y1 == 276 then
+		cursor(48, 316, 0)
+		print("The end")
+	end
+
 	line(dot0.x1, dot0.y1, dot1.x1, dot1.y1, 8)
 	palt(0x0080) -- Red transparent
 	spr(122, dot0.x1 - 4, dot0.y1 - 4)
 	spr(123, dot1.x1 - 4, dot1.y1 - 4)
 
 	camera()
+	cursor()
 	if dbg_msg then print(dbg_msg) end
+	-- print("x: "..flr(anchor.x1).." y: "..flr(anchor.y1))
 	-- print(have_keys)
 end
 

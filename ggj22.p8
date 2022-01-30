@@ -118,6 +118,9 @@ function _update60()
 	local can_grab = band(grabable, swing.grab) != 0
 	if wants_to_grab and can_grab then
 		anchor, swing = swing, anchor
+		anchor.x1 = (anchor.x1 & -8) + 4
+		anchor.y1 = (anchor.y1 & -8) + 4
+
 		wants_to_grab = false
 		sfx(0)
 	end
